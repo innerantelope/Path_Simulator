@@ -13,11 +13,23 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(nlohmann_json)
 
 FetchContent_Declare(
+    asio
+    URL https://github.com/chriskohlhoff/asio/archive/refs/tags/asio-1-30-2.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(asio)
+set(ASIO_INCLUDE_DIR "${asio_SOURCE_DIR}/asio/include" CACHE PATH "Standalone Asio include directory" FORCE)
+
+FetchContent_Declare(
     crow
     URL https://github.com/CrowCpp/Crow/archive/refs/tags/v1.2.1.tar.gz
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 FetchContent_MakeAvailable(crow)
+
+if(WIN32)
+    target_link_libraries(Crow INTERFACE ws2_32 mswsock)
+endif()
 
 add_library(
     smarttraffic_core

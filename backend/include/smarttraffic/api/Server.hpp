@@ -12,6 +12,33 @@
 
 namespace smarttraffic::api {
 
+struct CorsMiddleware {
+    struct context {};
+
+    void before_handle(crow::request& request, crow::response& response, context&) {
+        if (crow::method_name(request.method) == "OPTIONS") {
+            apply(request, response);
+            response.code = 200;
+            response.set_header("Content-Type", "text/plain");
+            response.end();
+        }
+    }
+
+    void after_handle(crow::request& request, crow::response& response, context&) {
+        apply(request, response);
+    }
+
+private:
+    static void apply(crow::request& request, crow::response& response) {
+        const auto origin = request.get_header_value("Origin");
+        response.set_header("Access-Control-Max-Age", "86400");
+        response.set_header("Vary", "Origin");
+        response.set_header("Access-Control-Allow-Origin", origin.empty() ? "*" : origin);
+        response.set_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+        response.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
+    }
+};
+
 class SmartTrafficServer final {
 public:
     SmartTrafficServer();
@@ -34,7 +61,7 @@ private:
     [[nodiscard]] nlohmann::json firstAvailableRoad() const;
 
     simulation::SimulationEngine engine_;
-    crow::SimpleApp app_;
+    crow::App<CorsMiddleware> app_;
     std::mutex connectionsMutex_;
     std::unordered_set<crow::websocket::connection*> connections_;
     std::atomic_bool broadcasting_{false};

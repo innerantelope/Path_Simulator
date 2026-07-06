@@ -25,8 +25,8 @@ Set project root to the repository root. `vercel.json` builds the Vite app from 
 Environment variables:
 
 ```text
-VITE_API_URL=https://your-render-service.onrender.com
-VITE_WS_URL=wss://your-render-service.onrender.com/ws
+VITE_API_BASE_URL=https://your-render-service.onrender.com
+VITE_WS_BASE_URL=wss://your-render-service.onrender.com
 ```
 
 ## Production Notes
