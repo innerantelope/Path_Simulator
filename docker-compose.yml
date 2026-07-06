@@ -1,0 +1,21 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      PORT: 18080
+    ports:
+      - "18080:18080"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    environment:
+      VITE_API_URL: http://localhost:18080
+      VITE_WS_URL: ws://localhost:18080/ws
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend

@@ -1,0 +1,12 @@
+.git
+.github
+build
+cmake-build-*
+frontend/node_modules
+frontend/dist
+frontend/.vercel
+*.tsbuildinfo
+*.log
+.env
+.env.*
+!frontend/.env.example

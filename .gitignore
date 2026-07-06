@@ -3,6 +3,14 @@ cmake-build-*/
 .cache/
 .vs/
 .vscode/
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.vercel/
+.env
+.env.*
+!.env.example
 *.user
 *.suo
 *.log

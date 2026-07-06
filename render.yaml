@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: smarttraffic-ai-backend
+    env: docker
+    plan: free
+    dockerfilePath: backend/Dockerfile
+    envVars:
+      - key: PORT
+        value: 18080

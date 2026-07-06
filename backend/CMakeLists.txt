@@ -12,9 +12,19 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
+FetchContent_Declare(
+    crow
+    URL https://github.com/CrowCpp/Crow/archive/refs/tags/v1.2.1.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(crow)
+
 add_library(
     smarttraffic_core
     src/graph/Graph.cpp
+    src/pathfinding/Pathfinder.cpp
+    src/city/CityGenerator.cpp
+    src/simulation/SimulationEngine.cpp
 )
 
 target_include_directories(
@@ -37,6 +47,25 @@ else()
     target_compile_options(smarttraffic_core PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+add_executable(
+    smarttraffic_server
+    src/api/Server.cpp
+    src/main.cpp
+)
+
+target_link_libraries(
+    smarttraffic_server
+    PRIVATE
+        smarttraffic_core
+        Crow::Crow
+)
+
+if(MSVC)
+    target_compile_options(smarttraffic_server PRIVATE /W4 /permissive-)
+else()
+    target_compile_options(smarttraffic_server PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 option(SMARTTRAFFIC_BUILD_TESTS "Build SmartTraffic AI backend tests" ON)
 
 if(BUILD_TESTING AND SMARTTRAFFIC_BUILD_TESTS)
@@ -52,6 +81,9 @@ if(BUILD_TESTING AND SMARTTRAFFIC_BUILD_TESTS)
     add_executable(
         smarttraffic_graph_tests
         tests/GraphTests.cpp
+        tests/PathfinderTests.cpp
+        tests/CityGeneratorTests.cpp
+        tests/SimulationEngineTests.cpp
     )
 
     target_link_libraries(
