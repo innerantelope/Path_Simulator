@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Activity, Map, RadioTower } from 'lucide-react';
 import { Route, Routes } from 'react-router-dom';
-import { api } from './api/client';
+import { api, formatApiError } from './api/client';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { ControlPanel } from './components/ControlPanel';
 import { SimulationCanvas } from './components/SimulationCanvas';
@@ -19,7 +19,7 @@ import type {
 
 function Dashboard() {
   const queryClient = useQueryClient();
-  const { snapshot, connected } = useSimulationSocket();
+  const { snapshot, connected, error: socketError } = useSimulationSocket();
   const [selectedRoad, setSelectedRoad] = useState<RoadState | null>(null);
   const [history, setHistory] = useState<SimulationStats[]>([]);
   const [comparison, setComparison] = useState<AlgorithmComparison | null>(null);
@@ -109,16 +109,14 @@ function Dashboard() {
     onSuccess: setComparison,
   });
 
-  const error =
-    cityQuery.error instanceof Error
-      ? cityQuery.error.message
-      : generateCityMutation.error instanceof Error
-        ? generateCityMutation.error.message
-        : simpleMutation.error instanceof Error
-          ? simpleMutation.error.message
-          : compareMutation.error instanceof Error
-            ? compareMutation.error.message
-            : null;
+  const latestError =
+    cityQuery.error ??
+    simulationQuery.error ??
+    generateCityMutation.error ??
+    spawnMutation.error ??
+    simpleMutation.error ??
+    compareMutation.error;
+  const error = latestError ? formatApiError(latestError) : socketError;
 
   return (
     <main className="grid h-screen grid-rows-[auto_1fr] overflow-hidden bg-ink text-slate-100">

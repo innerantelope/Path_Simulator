@@ -1,28 +1,30 @@
 import { useEffect, useMemo, useState } from 'react';
-import { API_URL } from '../api/client';
+import { WS_URL } from '../api/client';
 import type { SimulationSnapshot } from '../types';
 
 export function useSimulationSocket() {
   const [snapshot, setSnapshot] = useState<SimulationSnapshot | null>(null);
   const [connected, setConnected] = useState(false);
-
-  const wsUrl = useMemo(() => {
-    const configured = import.meta.env.VITE_WS_URL as string | undefined;
-    if (configured) {
-      return configured;
-    }
-    return `${API_URL.replace(/^http/, 'ws')}/ws`;
-  }, []);
+  const [error, setError] = useState<string | null>(null);
+  const wsUrl = useMemo(() => WS_URL, []);
 
   useEffect(() => {
     let closedByEffect = false;
+    let connectTimer: number | undefined;
     let reconnectTimer: number | undefined;
     let socket: WebSocket | undefined;
 
     const connect = () => {
+      if (closedByEffect) {
+        return;
+      }
+
       socket = new WebSocket(wsUrl);
 
-      socket.onopen = () => setConnected(true);
+      socket.onopen = () => {
+        setConnected(true);
+        setError(null);
+      };
       socket.onclose = () => {
         setConnected(false);
         if (!closedByEffect) {
@@ -30,20 +32,35 @@ export function useSimulationSocket() {
         }
       };
       socket.onerror = () => {
+        setError(`WebSocket connection failed at ${wsUrl}`);
         socket?.close();
       };
       socket.onmessage = (event) => {
-        const payload = JSON.parse(event.data) as SimulationSnapshot;
-        if (payload.type === 'simulation_update') {
-          setSnapshot(payload);
+        try {
+          const payload = JSON.parse(event.data) as Partial<SimulationSnapshot>;
+          if (payload.type !== 'simulation_update' || !payload.simulation || !payload.stats) {
+            setError('Invalid WebSocket update: missing simulation_update payload.');
+            return;
+          }
+          setSnapshot(payload as SimulationSnapshot);
+          setError(null);
+        } catch (parseError) {
+          setError(
+            `Invalid WebSocket JSON: ${
+              parseError instanceof Error ? parseError.message : 'message could not be parsed'
+            }`,
+          );
         }
       };
     };
 
-    connect();
+    connectTimer = window.setTimeout(connect, 0);
 
     return () => {
       closedByEffect = true;
+      if (connectTimer) {
+        window.clearTimeout(connectTimer);
+      }
       if (reconnectTimer) {
         window.clearTimeout(reconnectTimer);
       }
@@ -51,5 +68,5 @@ export function useSimulationSocket() {
     };
   }, [wsUrl]);
 
-  return { snapshot, connected };
+  return { snapshot, connected, error };
 }
